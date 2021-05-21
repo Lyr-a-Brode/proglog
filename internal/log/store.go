@@ -16,7 +16,7 @@ const (
 )
 
 type store struct {
-	File *os.File
+	file *os.File
 	mu   sync.Mutex
 	buf  *bufio.Writer
 	size uint64
@@ -29,7 +29,7 @@ func newStore(f *os.File) (*store, error) {
 	}
 
 	return &store{
-		File: f,
+		file: f,
 		buf:  bufio.NewWriter(f),
 		size: uint64(fi.Size()),
 	}, nil
@@ -66,13 +66,13 @@ func (s *store) Read(pos uint64) ([]byte, error) {
 
 	size := make([]byte, lenWidth)
 
-	if _, err := s.File.ReadAt(size, int64(pos)); err != nil {
+	if _, err := s.file.ReadAt(size, int64(pos)); err != nil {
 		return nil, err
 	}
 
 	b := make([]byte, encoding.Uint64(size))
 
-	if _, err := s.File.ReadAt(b, int64(pos+lenWidth)); err != nil {
+	if _, err := s.file.ReadAt(b, int64(pos+lenWidth)); err != nil {
 		return nil, err
 	}
 
@@ -87,7 +87,7 @@ func (s *store) ReadAt(p []byte, off int64) (int, error) {
 		return 0, err
 	}
 
-	return s.File.ReadAt(p, off)
+	return s.file.ReadAt(p, off)
 }
 
 func (s *store) Close() error {
@@ -98,5 +98,9 @@ func (s *store) Close() error {
 		return err
 	}
 
-	return s.File.Close()
+	return s.file.Close()
+}
+
+func (s *store) Name() string {
+	return s.file.Name()
 }
