@@ -1,6 +1,8 @@
 export GOFLAGS=
 
-.PHONY: build test all
+CONFIG_PATH=${HOME}/.proglog/
+
+.PHONY: build test all gencert
 
 all: build
 
@@ -10,3 +12,13 @@ build:
 test:
 	go test -race ./...
 
+gencert:
+	mkdir -p ${CONFIG_PATH}
+	cfssl gencert -initca test/ca-csr.json | cfssljson -bare ca
+	cfssl gencert \
+		-ca=ca.pem \
+		-ca-key=ca-key.pem \
+		-config=test/ca-config.json \
+		-profile=server \
+		test/server-csr.json | cfssljson -bare server
+	mv *.pem *.csr ${CONFIG_PATH}
